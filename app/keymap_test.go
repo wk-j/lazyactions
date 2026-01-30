@@ -36,8 +36,8 @@ func TestDefaultKeyMap_NavigationKeys(t *testing.T) {
 		binding  key.Binding
 		wantKeys []string
 	}{
-		{"Up", km.Up, []string{"up"}},
-		{"Down", km.Down, []string{"down"}},
+		{"Up", km.Up, []string{"up", "K"}},
+		{"Down", km.Down, []string{"down", "J"}},
 		{"Left", km.Left, []string{"h", "left"}},
 		{"Right", km.Right, []string{"l", "right"}},
 		{"PanelUp", km.PanelUp, []string{"k"}},
@@ -113,8 +113,8 @@ func TestDefaultKeyMap_HelpText(t *testing.T) {
 		wantKey  string
 		wantDesc string
 	}{
-		{"Up", km.Up, "↑", "move up in list"},
-		{"Down", km.Down, "↓", "move down in list"},
+		{"Up", km.Up, "↑/K", "move up in list"},
+		{"Down", km.Down, "↓/J", "move down in list"},
 		{"Left", km.Left, "h/←", "detail view"},
 		{"Right", km.Right, "l/→", "detail view"},
 		{"PanelUp", km.PanelUp, "k", "previous panel"},

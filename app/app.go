@@ -2,6 +2,7 @@
 package app
 
 import (
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -10,7 +11,10 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
 	"github.com/nnnkkk7/lazyactions/github"
+	"golang.org/x/term"
 )
 
 // Pane represents a UI pane
@@ -471,10 +475,41 @@ func Run(client github.Client, repo github.Repository) error {
 		WithRepository(repo),
 	)
 
-	p := tea.NewProgram(app,
+	// Build program options
+	opts := []tea.ProgramOption{
 		tea.WithAltScreen(),
 		tea.WithMouseCellMotion(),
-	)
+	}
+
+	// Check if stdin/stdout are terminals
+	// If not (e.g., piped from Helix editor), open /dev/tty directly
+	stdinIsTTY := term.IsTerminal(int(os.Stdin.Fd()))
+	stdoutIsTTY := term.IsTerminal(int(os.Stdout.Fd()))
+
+	var ttyFile *os.File
+	if !stdinIsTTY || !stdoutIsTTY {
+		var err error
+		ttyFile, err = os.OpenFile("/dev/tty", os.O_RDWR, 0)
+		if err == nil {
+			// Redirect bubbletea to use the real TTY
+			if !stdinIsTTY {
+				opts = append(opts, tea.WithInput(ttyFile))
+			}
+			if !stdoutIsTTY {
+				opts = append(opts, tea.WithOutput(ttyFile))
+			}
+			// Force TrueColor renderer on the TTY for proper color support
+			lipgloss.SetDefaultRenderer(lipgloss.NewRenderer(ttyFile, termenv.WithProfile(termenv.TrueColor)))
+		}
+	}
+
+	p := tea.NewProgram(app, opts...)
 	_, err := p.Run()
+
+	// Clean up TTY file if we opened it
+	if ttyFile != nil {
+		ttyFile.Close()
+	}
+
 	return err
 }
